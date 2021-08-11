@@ -1,7 +1,8 @@
-import discord, requests
+import discord, requests, requests_cache
 from bs4 import BeautifulSoup
 
 class MyClient(discord.Client):
+    requests_cache.install_cache('sw_cache', expire_after=604800)
     async def on_ready(self):
         print('Now logged on as:', self.user)
     async def on_message(self, message):
@@ -51,6 +52,7 @@ class Scraper():
     def scrape_wookieepedia(base, topic):
         url = base + topic
         request = requests.get(url)
+        print(request.from_cache)
         if request.status_code in [200]:
             page = BeautifulSoup(request.text, 'lxml')
             return page
@@ -70,7 +72,6 @@ class Scraper():
                 text = text + "\n" + div.h3.text + ": "
                 try:
                     outer_list = div.div.ul.find_all("a")
-                    print(outer_list)
                     for outer_item in outer_list:
                         text = text + outer_item.text + ", "
                     text = text[:-2] + "."
@@ -97,9 +98,8 @@ class Scraper():
             if no_results > 5:
                 break;
             info = result.find('div', class_="unified-search__result__content")
-            print(info)
             text = text + "**" + result.h1.text + "**" + "```" + info.text + "```"
         return text[0:4000]
 
 client = MyClient()
-client.run('')
+client.run('SECRET')
